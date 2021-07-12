@@ -21,9 +21,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/msalihkarakasli/go-hms-push/push/authention"
-	"github.com/msalihkarakasli/go-hms-push/push/config"
 	"reflect"
+
+	auth "github.com/msalihkarakasli/go-hms-push/push/authention"
+	"github.com/msalihkarakasli/go-hms-push/push/config"
 
 	"github.com/msalihkarakasli/go-hms-push/httpclient"
 	"github.com/msalihkarakasli/go-hms-push/push/constant"
@@ -86,6 +87,14 @@ func (c *HMSClient) refreshToken() error {
 	return nil
 }
 
+func (c *HMSClient) resetHTTPHeader(request *httpclient.PushRequest) *httpclient.PushRequest {
+	request.Header = []httpclient.HTTPOption{
+		httpclient.SetHeader("Content-Type", "application/json;charset=utf-8"),
+		httpclient.SetHeader("Authorization", "Bearer "+c.token),
+	}
+	return request
+}
+
 func (c *HMSClient) executeApiOperation(ctx context.Context, request *httpclient.PushRequest, responsePointer interface{}) error {
 	err := c.sendHttpRequest(ctx, request, responsePointer)
 	if err != nil {
@@ -99,6 +108,7 @@ func (c *HMSClient) executeApiOperation(ctx context.Context, request *httpclient
 	}
 
 	if retry {
+		c.resetHTTPHeader(request)
 		err = c.sendHttpRequest(ctx, request, responsePointer)
 		return err
 	}
